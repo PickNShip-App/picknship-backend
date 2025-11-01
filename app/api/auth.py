@@ -35,10 +35,27 @@ async def auth_callback(code: str = None, error: str = None):
                 "client_secret": settings.TIENDANUBE_CLIENT_SECRET,
                 "grant_type": "authorization_code",
                 "code": code,
+                "redirect_uri": settings.TIENDANUBE_REDIRECT_URI  # MUST match dashboard
             },
             timeout=20.0,
         )
-    data = response.json()
+
+        # Check if the response is OK
+        if response.status_code != 200:
+            # Log raw response for debugging
+            print(f"[ERROR] Token request failed with status {response.status_code}")
+            print(response.text)
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Token request failed. Raw response: {response.text}"
+            )
+
+        try:
+            data = response.json()
+        except Exception as e:
+            print("[ERROR] Failed to parse JSON from token response:")
+            print(response.text)
+            raise HTTPException(status_code=500, detail=f"Failed to parse token JSON: {str(e)}")
 
     access_token = data.get("access_token")
     user_id = data.get("user_id") or data.get("store_id") or data.get("store")  # flexible field names
