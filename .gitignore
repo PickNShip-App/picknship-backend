@@ -20,3 +20,6 @@ venv/
 
 # Python packages
 *.egg-info/
+
+# Local database
+*.db

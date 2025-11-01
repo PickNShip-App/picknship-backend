@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from app.core.config import settings
 import httpx
+from app.core.db import save_store, init_db
 
 router = APIRouter(prefix="/auth")
 
 TIENDANUBE_AUTH_URL = "https://www.tiendanube.com/apps/authorize"
 TIENDANUBE_TOKEN_URL = "https://www.tiendanube.com/apps/token"
 
+init_db()
+
 @router.get("/install")
 async def install_app():
-    """Step 1: Redirect merchant to Tienda Nube authorization screen"""
     params = (
         f"?client_id={settings.TIENDANUBE_CLIENT_ID}"
         f"&redirect_uri={settings.TIENDANUBE_REDIRECT_URI}"
@@ -18,8 +20,13 @@ async def install_app():
     return RedirectResponse(url=TIENDANUBE_AUTH_URL + params)
 
 @router.get("/callback")
-async def auth_callback(code: str):
-    """Step 2: Exchange code for access_token"""
+async def auth_callback(code: str = None, error: str = None):
+    """Exchange code for token and persist the store + token"""
+    if error:
+        raise HTTPException(status_code=400, detail=f"OAuth error: {error}")
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing code parameter")
+
     async with httpx.AsyncClient() as client:
         response = await client.post(
             TIENDANUBE_TOKEN_URL,
@@ -29,10 +36,18 @@ async def auth_callback(code: str):
                 "grant_type": "authorization_code",
                 "code": code,
             },
+            timeout=20.0,
         )
     data = response.json()
+
     access_token = data.get("access_token")
+    user_id = data.get("user_id") or data.get("store_id") or data.get("store")  # flexible field names
+    store_name = data.get("store_name") or data.get("shop_name") or ""
 
-    # TODO: store access_token and store_id in your DB for future use
+    if not access_token or not user_id:
+        raise HTTPException(status_code=400, detail={"msg": "Token response missing fields", "raw": data})
 
-    return {"message": "Pick'NShip connected successfully!", "token": access_token}
+    # persist
+    save_store(store_id=user_id, access_token=access_token, store_name=store_name)
+
+    return {"message": "Pick'NShip connected successfully!", "store_id": user_id}
