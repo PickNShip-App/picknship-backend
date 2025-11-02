@@ -1,10 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from app.core.config import settings
-from app.core.db import save_store, init_db
-from app.services.tiendanube import create_picknship_shipping_method
-import httpx
+from app.core.db import save_store, init_db, mark_shipping_created, get_store
 from app.services import tiendanube
+import httpx
 
 router = APIRouter(prefix="/auth")
 
@@ -78,12 +77,31 @@ async def auth_callback(code: str = None, error: str = None):
         raise HTTPException(status_code=400, detail={"msg": "Token response missing fields", "raw": data})
 
     # Persist store in database
-    save_store(store_id=user_id, access_token=access_token, store_name=store_name)
+    save_store(store_id=user_id, access_token=access_token, store_name=store_name, shipping_created=False)
 
     # Automatically create PickNShip shipping method
     try:
         await tiendanube.create_picknship_shipping_method(store_id=user_id, access_token=access_token)
+        # Mark as shipping created
+        mark_shipping_created(user_id)
     except Exception as e:
         print(f"[WARNING] Could not create PickNShip shipping automatically: {str(e)}")
 
     return {"message": "Pick'NShip connected successfully!", "store_id": user_id}
+
+
+@router.post("/shipping/retry/{store_id}")
+async def retry_shipping(store_id: str):
+    """
+    Manually retry creating PickNShip shipping method for a store.
+    """
+    store = get_store(store_id)
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
+
+    try:
+        await tiendanube.create_picknship_shipping_method(store_id=store_id, access_token=store["access_token"])
+        mark_shipping_created(store_id)
+        return {"message": "PickNShip shipping method created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create shipping method: {str(e)}")
