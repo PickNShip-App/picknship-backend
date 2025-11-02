@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from app.core.config import settings
 from app.core.db import save_store, init_db
-from app.services.tiendanube import create_picknship_shipping
+from app.services.tiendanube import create_picknship_shipping_method
 import httpx
 from app.services import tiendanube
 
