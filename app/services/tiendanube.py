@@ -11,7 +11,7 @@ PICKNSHIP_ENABLED = True
 CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
 
 
-async def create_picknship_shipping(store_id: int, access_token: str):
+async def create_picknship_shipping_method(store_id: int, access_token: str):
     """
     Creates a PickNShip shipping method in the store via TiendaNube API.
     If shipping already exists, it does nothing (idempotent).
