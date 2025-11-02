@@ -32,7 +32,7 @@ async def auth_callback(code: str = None, error: str = None):
 
     headers = {
         "Content-Type": "application/json",
-        "User-Agent": f"Pick'NShip ({settings.NOTIFIER_EMAIL})"
+        "User-Agent": f"Pick'NShip ({settings.PICKNSHIP_EMAIL})"
     }
 
     async with httpx.AsyncClient() as client:
