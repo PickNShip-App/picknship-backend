@@ -19,10 +19,17 @@ async def install_app():
     """
     Redirect store owner to Tienda Nube to authorize app installation
     """
+    scopes = (
+        "read_content write_content "
+        "read_products write_products "
+        "read_customers write_customers "
+        "read_orders write_orders "
+        "write_shipping"
+    )
     params = (
         f"?client_id={settings.TIENDANUBE_CLIENT_ID}"
         f"&redirect_uri={settings.TIENDANUBE_REDIRECT_URI}"
-        f"&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,write_shipping"
+        f"&scope={scopes.replace(' ', '%20')}"
     )
     return RedirectResponse(url=TIENDANUBE_AUTH_URL + params)
 
