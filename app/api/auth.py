@@ -22,7 +22,7 @@ async def install_app():
     params = (
         f"?client_id={settings.TIENDANUBE_CLIENT_ID}"
         f"&redirect_uri={settings.TIENDANUBE_REDIRECT_URI}"
-        f"&scope=scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,write_shipping"
+        f"&scope=read_content,write_content,read_products,write_products,read_customers,write_customers,read_orders,write_orders,write_shipping"
     )
     return RedirectResponse(url=TIENDANUBE_AUTH_URL + params)
 
