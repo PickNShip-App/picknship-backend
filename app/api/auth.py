@@ -76,7 +76,7 @@ async def auth_callback(code: str = None, error: str = None):
         data = response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to parse token JSON: {str(e)}")
-
+    print(f"[DEBUG] Token response data: {data}")
     access_token = data.get("access_token")
     user_id = data.get("user_id") or data.get("store_id") or data.get("store")
     store_name = data.get("store_name") or data.get("shop_name") or ""
