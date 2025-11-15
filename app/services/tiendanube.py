@@ -28,7 +28,7 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
     async with httpx.AsyncClient(timeout=20.0) as client:
         # 1️⃣ Fetch existing shippings
         try:
-            resp = await client.get(f"https://api.tiendanube.com/v1/{store_id}/shippings", headers=headers)
+            resp = await client.get(f"https://api.tiendanube.com/v1/{store_id}/shipping_carriers", headers=headers)
             if resp.status_code == 404:
                 shippings = []  # no shippings yet
             elif resp.status_code != 200:
@@ -50,6 +50,8 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
         # 3️⃣ Create Pick'NShip shipping
         payload = {
             "name": PICKNSHIP_NAME,
+            "callback_url": f"https://{settings.BACKEND_URL}/rates",
+            "types": "ship",
             "price": PICKNSHIP_PRICE,
             "enabled": PICKNSHIP_ENABLED,
             "description": PICKNSHIP_DESCRIPTION,
@@ -58,7 +60,7 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
         }
 
         try:
-            create_resp = await client.post(f"https://api.tiendanube.com/v1/{store_id}/shippings",
+            create_resp = await client.post(f"https://api.tiendanube.com/v1/{store_id}/shipping_carriers",
                                             headers=headers,
                                             json=payload)
         except httpx.RequestError as e:
