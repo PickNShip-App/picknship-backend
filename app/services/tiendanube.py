@@ -20,7 +20,7 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
     """
 
     headers = {
-        "Authorization": f"bearer {access_token}",
+        "Authentication": f"bearer {access_token}",
         "User-Agent": f"Pick'NShip ({settings.PICKNSHIP_EMAIL})",
         "Content-Type": "application/json"
     }
