@@ -5,8 +5,6 @@ from typing import Dict, Any
 
 PICKNSHIP_NAME = "Pick'NShip: vos elegís cuándo"
 PICKNSHIP_DESCRIPTION = "Coordiná día y horario exacto con el repartidor luego de la compra"
-PICKNSHIP_PRICE = 10000
-PICKNSHIP_ENABLED = True
 
 # CABA postal codes: 1000–1429 + 'C1000'-'C1429'
 CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
@@ -51,12 +49,7 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
         payload = {
             "name": PICKNSHIP_NAME,
             "callback_url": f"{settings.BACKEND_URL}/rates",
-            "types": "ship",
-            "price": PICKNSHIP_PRICE,
-            "enabled": PICKNSHIP_ENABLED,
-            "description": PICKNSHIP_DESCRIPTION,
-            "delivery_time": None,
-            "zip_codes": CABA_ZIPCODES,
+            "types": "ship"
         }
 
         try:
