@@ -50,7 +50,7 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
         # 3️⃣ Create Pick'NShip shipping
         payload = {
             "name": PICKNSHIP_NAME,
-            "callback_url": f"https://{settings.BACKEND_URL}/rates",
+            "callback_url": f"{settings.BACKEND_URL}/rates",
             "types": "ship",
             "price": PICKNSHIP_PRICE,
             "enabled": PICKNSHIP_ENABLED,
