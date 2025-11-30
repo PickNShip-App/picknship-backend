@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from datetime import datetime, timedelta
 import json
 
-router = APIRouter(prefix="/rates")
+router = APIRouter()
 
 CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
 
@@ -12,7 +12,7 @@ def is_caba(postal_code: str) -> bool:
     p = postal_code.strip().upper()
     return p in CABA_ZIPCODES
 
-@router.post("/")
+@router.post("/rates")
 async def calculate_rates(request: Request):
     body = await request.json()
     destination = body.get("destination", {})
