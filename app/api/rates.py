@@ -1,22 +1,20 @@
 from fastapi import APIRouter, Request
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, Optional
 from app.core.config import settings
 import httpx
 import urllib.parse
-import os
 
 router = APIRouter()
 
-# --- (commented) previous CABA logic kept for quick revert ---
-# CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
-# def is_caba(postal_code: str) -> bool:
-#     if not postal_code:
-#         return False
-#     p = postal_code.strip().upper()
-#     return p in CABA_ZIPCODES
+# --- ZIP code fallback for quick check before full addresses ---
+CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
+def is_caba(postal_code: str) -> bool:
+    if not postal_code:
+        return False
+    return postal_code.strip().upper() in CABA_ZIPCODES
 
-# Google Maps configuration — set GOOGLE_MAPS_API_KEY in your environment or settings
+# Google Maps configuration
 GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
 
 # Price tiers (ARS)
@@ -24,35 +22,17 @@ PRICE_TIER_LT_5KM = 3000
 PRICE_TIER_5_TO_10KM = 5000
 PRICE_TIER_10_TO_20KM = 10000
 
-# Helper to build a readable address string for Maps API
 def build_address_str(addr: Dict[str, Any]) -> str:
-    # Use available fields to construct a best-effort address
+    """Build a readable address string for Google Maps API."""
     parts = []
-    if addr.get("address"):
-        parts.append(addr.get("address"))
-    if addr.get("number"):
-        parts.append(str(addr.get("number")))
-    if addr.get("floor"):
-        parts.append(f"Floor {addr.get('floor')}")
-    if addr.get("locality"):
-        parts.append(addr.get("locality"))
-    if addr.get("city"):
-        parts.append(addr.get("city"))
-    if addr.get("province"):
-        parts.append(addr.get("province"))
-    if addr.get("postal_code"):
-        parts.append(str(addr.get("postal_code")))
-    if addr.get("country"):
-        parts.append(addr.get("country"))
-    return ", ".join([p for p in parts if p])
+    for key in ["address", "number", "floor", "locality", "city", "province", "postal_code", "country"]:
+        if addr.get(key):
+            parts.append(str(addr.get(key)))
+    return ", ".join(parts)
 
 async def get_distance_km(origin: Dict[str, Any], destination: Dict[str, Any]) -> Optional[float]:
-    """
-    Calls Google Distance Matrix API and returns distance in kilometers (float).
-    Returns None on error or if distance cannot be calculated.
-    """
-    if not GOOGLE_MAPS_API_KEY:
-        # No API key configured
+    """Call Google Distance Matrix API and return distance in km."""
+    if not GOOGLE_MAPS_API_KEY or not origin or not destination:
         return None
 
     origin_str = build_address_str(origin)
@@ -70,76 +50,53 @@ async def get_distance_km(origin: Dict[str, Any], destination: Dict[str, Any]) -
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(url)
-    except Exception:
-        return None
-
-    if resp.status_code != 200:
-        return None
-
-    data = resp.json()
-    # Check overall status
-    if data.get("status") != "OK":
-        return None
-
-    # Expect rows -> elements structure
-    try:
+        data = resp.json()
+        if data.get("status") != "OK":
+            return None
         element = data["rows"][0]["elements"][0]
         if element.get("status") != "OK":
             return None
         meters = element["distance"]["value"]
-        km = meters / 1000.0
-        return float(km)
+        return meters / 1000.0
     except Exception:
         return None
-
 
 @router.post("/rates")
 async def calculate_rates(request: Request):
     """
-    TiendaNube calls here to request rates for a checkout.
-    We will:
-      - read origin and destination from the payload
-      - call Google Distance Matrix to compute distance (km)
-      - return a rate according to the tiers:
-          <5km -> 3000
-          5-10km -> 5000
-          10-20km -> 10000
-          >20km -> no rate (we don't serve)
+    TiendaNube calls here to request rates.
+    - First: fallback by ZIP code if no full addresses
+    - Then: calculate distance if origin/destination present
+    - Return price according to tiers
     """
-
     payload = await request.json()
-
     origin = payload.get("origin", {}) or {}
     destination = payload.get("destination", {}) or {}
+    postal_code = destination.get("postal_code", "")
     currency = payload.get("currency", "ARS")
 
-    # Optionally: quick fallback if no Google key or address (commented)
-    # postal_code = destination.get("postal_code", "")
-    # if not is_caba(postal_code):
-    #     return {"rates": []}
-
-    # Compute distance using Google
-    distance_km = await get_distance_km(origin, destination)
-
-    # If distance couldn't be computed, hide our option (safe default)
-    if distance_km is None:
-        return {"rates": []}
-
-    # Determine price tier
+    # --- ZIP fallback: show option if destination is CABA ---
+    show_option = is_caba(postal_code)
     price = None
-    if distance_km < 5.0:
-        price = PRICE_TIER_LT_5KM
-    elif 5.0 <= distance_km < 10.0:
-        price = PRICE_TIER_5_TO_10KM
-    elif 10.0 <= distance_km <= 20.0:
-        price = PRICE_TIER_10_TO_20KM
-    else:
-        # > 20 km not served
-        return {"rates": []}
 
-    now = datetime.now()
-    #min_delivery = (now + timedelta(days=0)).strftime("%Y-%m-%dT%H:%M:%S-0300")
-    #max_delivery = (now + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S-0300")
+    # --- Distance-based pricing if we have full addresses ---
+    distance_km = await get_distance_km(origin, destination)
+    if distance_km is not None:
+        if distance_km < 5.0:
+            price = PRICE_TIER_LT_5KM
+        elif 5.0 <= distance_km < 10.0:
+            price = PRICE_TIER_5_TO_10KM
+        elif 10.0 <= distance_km <= 20.0:
+            price = PRICE_TIER_10_TO_20KM
+        else:
+            show_option = False  # >20km, do not show
+
+    # If we can show the option, fallback to default price if distance not available
+    if show_option and price is None:
+        price = PRICE_TIER_10_TO_20KM  # default price for ZIP fallback
+
+    if not show_option:
+        return {"rates": []}
 
     rate = {
         "name": "Pick'NShip: coordiná día y horario",
@@ -151,7 +108,7 @@ async def calculate_rates(request: Request):
         "phone_required": True,
         "id_required": False,
         "accepts_cod": False,
-        "reference": f"picknship_km_{int(distance_km*1000)}m"
+        "reference": f"picknship_rate_{int(distance_km*1000) if distance_km else 'zip'}m"
     }
 
     return {"rates": [rate]}
