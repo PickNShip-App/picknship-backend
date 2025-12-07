@@ -36,7 +36,9 @@ async def get_distance_km(origin: Dict[str, Any], destination: Dict[str, Any]) -
         return None
 
     origin_str = build_address_str(origin)
+    print(f"[DEBUG] Origin address string: {origin_str}")
     destination_str = build_address_str(destination)
+    print(f"[DEBUG] Destination address string: {destination_str}")
     if not origin_str or not destination_str:
         return None
 
@@ -81,6 +83,7 @@ async def calculate_rates(request: Request):
 
     # --- Distance-based pricing if we have full addresses ---
     distance_km = await get_distance_km(origin, destination)
+    print(f"[INFO] Calculated distance: {distance_km} km")
     if distance_km is not None:
         if distance_km < 5.0:
             price = PRICE_TIER_LT_5KM
@@ -108,7 +111,7 @@ async def calculate_rates(request: Request):
         "phone_required": True,
         "id_required": False,
         "accepts_cod": False,
-        "reference": f"picknship_rate_{int(distance_km*1000) if distance_km else 'zip'}m"
+        "reference": f"picknship_rate_{'lt_5' if distance_km and distance_km < 5.0 else '5_10' if distance_km and 5.0 <= distance_km < 10.0 else '10_20' if distance_km and 10.0 <= distance_km <= 20.0 else 'zip'}",
     }
 
     return {"rates": [rate]}
