@@ -83,6 +83,7 @@ async def calculate_rates(request: Request):
 
     # --- Distance-based pricing if we have full addresses ---
     distance_km = await get_distance_km(origin, destination)
+    print(f"[DEBUG] Destination: {destination}")
     print(f"[INFO] Calculated distance: {distance_km} km")
     if distance_km is not None:
         if distance_km < 5.0:
