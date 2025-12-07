@@ -61,8 +61,8 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
             if create_resp.status_code in (200, 201):
                 shipping_id = create_resp.json().get("id")
                 options_payload = {
-                    "code": "picknship_standard",
-                    "name": "picknship_standard"
+                    "code": "picknship_dynamic",
+                    "name": "picknship_dynamic"
                 }
                 await client.post(f"https://api.tiendanube.com/v1/{store_id}/shipping_carriers/{shipping_id}/options",
                                  headers=headers,
