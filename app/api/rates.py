@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
+from app.core.config import settings
 import httpx
 import urllib.parse
 import os
@@ -16,7 +17,7 @@ router = APIRouter()
 #     return p in CABA_ZIPCODES
 
 # Google Maps configuration — set GOOGLE_MAPS_API_KEY in your environment or settings
-GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")  # required
+GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
 
 # Price tiers (ARS)
 PRICE_TIER_LT_5KM = 3000
