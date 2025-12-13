@@ -14,7 +14,14 @@ GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
 PRICE_TIER_LT_5KM = 3000
 PRICE_TIER_5_TO_10KM = 5000
 PRICE_TIER_10_TO_20KM = 10000
-PRICE_TIER_UNKNOWN = 15000  # Fallback price if distance can't be calculated
+
+# --- ZIP code fallback for quick check before full addresses ---
+CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
+def is_caba(postal_code: str) -> bool:
+    if not postal_code:
+        return False
+    return postal_code.strip().upper() in CABA_ZIPCODES
+
 
 def build_address_str(addr: Dict[str, Any]) -> str:
     """Build a readable address string for Google Maps API."""
@@ -84,9 +91,11 @@ async def calculate_rates(request: Request):
             price = PRICE_TIER_5_TO_10KM
         elif 10.0 <= distance_km <= 20.0:
             price = PRICE_TIER_10_TO_20KM
-        else:
-            price = PRICE_TIER_UNKNOWN
     else:
+        if is_caba(postal_code):
+            price = PRICE_TIER_10_TO_20KM
+    
+    if price is None:
         return {"rates": []}
 
     rate = {
