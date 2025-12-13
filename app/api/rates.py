@@ -7,13 +7,6 @@ import urllib.parse
 
 router = APIRouter()
 
-# --- ZIP code fallback for quick check before full addresses ---
-CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
-def is_caba(postal_code: str) -> bool:
-    if not postal_code:
-        return False
-    return postal_code.strip().upper() in CABA_ZIPCODES
-
 # Google Maps configuration
 GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
 
@@ -21,6 +14,7 @@ GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
 PRICE_TIER_LT_5KM = 3000
 PRICE_TIER_5_TO_10KM = 5000
 PRICE_TIER_10_TO_20KM = 10000
+PRICE_TIER_UNKNOWN = 15000  # Fallback price if distance can't be calculated
 
 def build_address_str(addr: Dict[str, Any]) -> str:
     """Build a readable address string for Google Maps API."""
@@ -77,8 +71,6 @@ async def calculate_rates(request: Request):
     postal_code = destination.get("postal_code", "")
     currency = payload.get("currency", "ARS")
 
-    # --- ZIP fallback: show option if destination is CABA ---
-    show_option = is_caba(postal_code)
     price = None
 
     # --- Distance-based pricing if we have full addresses ---
@@ -93,13 +85,8 @@ async def calculate_rates(request: Request):
         elif 10.0 <= distance_km <= 20.0:
             price = PRICE_TIER_10_TO_20KM
         else:
-            show_option = False  # >20km, do not show
-
-    # If we can show the option, fallback to default price if distance not available
-    if show_option and price is None:
-        price = PRICE_TIER_10_TO_20KM  # default price for ZIP fallback
-
-    if not show_option:
+            price = PRICE_TIER_UNKNOWN
+    else:
         return {"rates": []}
 
     rate = {
