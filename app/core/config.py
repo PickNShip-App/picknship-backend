@@ -10,5 +10,6 @@ class Settings:
     PICKNSHIP_EMAIL = os.getenv("PICKNSHIP_EMAIL")
     BACKEND_URL = os.getenv("BACKEND_URL", "localhost:8000")
     GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+    LOGO_URL = os.getenv("LOGO_URL", "https://picknship.com/logo.png")
 
 settings = Settings()

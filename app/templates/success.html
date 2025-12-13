@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pick'NShip conectado</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pns-primary': '#7A1CAC',   // Morado Vibrante (CTA, Acentos)
+                        'pns-secondary': '#AD49E1', // Morado Claro (Fondo de Icono)
+                        'pns-dark': '#2E073F',      // Morado Oscuro (Texto y Títulos)
+                        'pns-darkest': '#060007',   // Casi Negro
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+
+    <div class="relative bg-white max-w-lg w-full rounded-2xl shadow-xl p-8 text-center border-2 border-pns-primary/50">
+        
+        <div class="flex justify-center mb-2"> 
+            <img src="{{ logo_url }}" alt="Pick'NShip Logo" class="h-10 w-auto"/>
+        </div>
+
+        <div class="flex justify-center mb-6"> 
+            <div class="h-16 w-16 rounded-full bg-pns-secondary/20 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-pns-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-pns-dark mb-3">
+            ¡Pick'NShip se conectó con éxito!
+        </h1>
+
+        <p class="text-gray-600 mb-6">
+            Tu tienda ya está lista para ofrecer entregas personalizadas,
+            donde tus clientes pueden elegir el día y horario de entrega.
+        </p>
+
+        <div class="bg-pns-secondary/5 rounded-xl shadow-inner p-4 mb-8 text-sm text-gray-700">
+            <p>
+                El método de envío <strong>Pick'NShip</strong> ya fue creado automáticamente
+                y se activará cuando corresponda según la ubicación del comprador.
+            </p>
+        </div>
+
+        {% if store_url %}
+        <a href="{{ store_url }}" target="_blank"
+           class="inline-block w-full bg-pns-primary text-white py-3 rounded-xl font-medium hover:bg-pns-dark transition">
+            Ir a mi tienda
+        </a>
+        {% else %}
+        <div class="inline-block w-full bg-gray-200 text-gray-600 py-3 rounded-xl font-medium cursor-not-allowed">
+            Tienda conectada correctamente
+        </div>
+        {% endif %}
+        
+        <div class="mt-4">
+            <a href="https://picknshipapp.wordpress.com/"
+               target="_blank"
+               class="text-sm text-pns-primary hover:text-pns-dark underline">
+                Conocé más sobre Pick'NShip
+            </a>
+        </div>
+
+        <p class="text-xs text-gray-700 mt-6 opacity-85">
+            Pick'NShip · Vos elegís cuándo
+        </p>
+    </div>
+
+</body>
+</html>

@@ -95,7 +95,10 @@ async def auth_callback(code: str = None, error: str = None):
     except Exception as e:
         print(f"[WARNING] Could not create PickNShip shipping automatically: {str(e)}")
 
-    return {"message": "Pick'NShip connected successfully!", "store_id": user_id}
+    return RedirectResponse(
+    url=f"{settings.BACKEND_URL}/success?store_id={user_id}",
+    status_code=302
+    )
 
 
 @router.post("/shipping/retry/{store_id}")
