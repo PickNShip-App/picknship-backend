@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from app.core.config import settings
 from app.core.db import save_store, init_db, mark_shipping_created, get_store
 from app.services import tiendanube
+from app.services.notifier import notify_store_installed
 import httpx
 
 router = APIRouter(prefix="/auth")
@@ -104,6 +105,14 @@ async def auth_callback(code: str = None, error: str = None):
 
     # Persist store in database
     save_store(store_id=user_id, access_token=access_token, store=store_data, shipping_created=False)
+
+    # Notify of new installation
+    await notify_store_installed(
+        store_id=str(user_id),
+        store_name=store_data["name"],
+        domain=store_data["domain"],
+        email=store_data["email"]
+    )
 
     # Automatically create PickNShip shipping method
     try:
