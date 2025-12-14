@@ -57,7 +57,7 @@ def save_store(store_id: str, access_token: str, store: Dict, shipping_created: 
             now,
             int(shipping_created),
             store.get("domain", ""),
-            store.get("admin_email", "")
+            store.get("email", "")
         ))
         conn.commit()
         conn.close()
