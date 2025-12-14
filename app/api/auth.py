@@ -89,13 +89,21 @@ async def auth_callback(code: str = None, error: str = None):
             access_token=access_token
         )
         print(f"[DEBUG] Store info: {store_info}")
-        store_name = store_info.get("name", "")
+        store_data = {
+            "name": store_info.get("name", {}).get("es") or store_info.get("name", {}).get("en") or "",
+            "domain": store_info.get("url_with_protocol", ""),
+            "email": store_info.get("email", "")
+        }
     except Exception as e:
         print(f"[WARNING] Could not fetch store info: {str(e)}")
-        store_name = ""
+        store_data = {
+            "name": "",
+            "domain": "",
+            "email": ""
+        }
 
     # Persist store in database
-    save_store(store_id=user_id, access_token=access_token, store_name=store_name, shipping_created=False)
+    save_store(store_id=user_id, access_token=access_token, store=store_data, shipping_created=False)
 
     # Automatically create PickNShip shipping method
     try:

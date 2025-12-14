@@ -35,20 +35,30 @@ def init_db():
         conn.commit()
         conn.close()
 
-def save_store(store_id: str, access_token: str, store_name: Optional[str] = None, shipping_created: bool = False):
+def save_store(store_id: str, access_token: str, store: Dict, shipping_created: bool = False):
     with _lock:
         conn = _connect()
         c = conn.cursor()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now().isoformat()
         c.execute("""
-        INSERT INTO stores (store_id, store_name, access_token, installed_at, shipping_created)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO stores (store_id, store_name, access_token, installed_at, shipping_created, domain, email)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(store_id) DO UPDATE SET
           access_token = excluded.access_token,
           store_name = excluded.store_name,
           installed_at = excluded.installed_at,
-          shipping_created = excluded.shipping_created
-        """, (str(store_id), store_name or "", access_token, now, int(shipping_created)))
+          shipping_created = excluded.shipping_created,
+          domain = excluded.domain,
+          email = excluded.email
+        """, (
+            str(store_id),
+            store.get("name", ""),
+            access_token,
+            now,
+            int(shipping_created),
+            store.get("domain", ""),
+            store.get("admin_email", "")
+        ))
         conn.commit()
         conn.close()
 
