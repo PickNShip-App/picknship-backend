@@ -2,6 +2,7 @@ import httpx
 from app.core.config import settings
 from typing import Dict, Any, Optional
 from datetime import datetime
+import pytz
 
 async def send_slack_message(
     text: str,
@@ -37,6 +38,12 @@ async def notify_store_installed(
     domain: str | None = None,
     email: str | None = None
 ):
+    # Convert current time to Argentina time
+    argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
+    now_utc = datetime.utcnow()
+    now_argentina = now_utc.astimezone(argentina_tz)
+    formatted_date = now_argentina.strftime("%d/%m/%Y %H:%M:%S")  # Example: 14/12/2025 03:23:37
+
     blocks = [
         {
             "type": "header",
@@ -52,7 +59,7 @@ async def notify_store_installed(
                 {"type": "mrkdwn", "text": f"*Nombre:*\n{store_name or '—'}"},
                 {"type": "mrkdwn", "text": f"*Dominio:*\n{domain or '—'}"},
                 {"type": "mrkdwn", "text": f"*Email:*\n{email or '—'}"},
-                {"type": "mrkdwn", "text": f"*Fecha:*\n{datetime.now().isoformat()}"},
+                {"type": "mrkdwn", "text": f"*Fecha:*\n{formatted_date}"},
             ]
         }
     ]
