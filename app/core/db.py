@@ -17,10 +17,12 @@ def init_db():
         CREATE TABLE IF NOT EXISTS stores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             store_id TEXT UNIQUE,
-            store_name TEXT,
+            name TEXT,
             access_token TEXT,
             installed_at TEXT,
-            shipping_created INTEGER DEFAULT 0
+            shipping_created INTEGER DEFAULT 0,
+            domain TEXT,
+            email TEXT
         )
         """)
         c.execute("""
@@ -41,11 +43,11 @@ def save_store(store_id: str, access_token: str, store: Dict, shipping_created: 
         c = conn.cursor()
         now = datetime.now().isoformat()
         c.execute("""
-        INSERT INTO stores (store_id, store_name, access_token, installed_at, shipping_created, domain, email)
+        INSERT INTO stores (store_id, name, access_token, installed_at, shipping_created, domain, email)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(store_id) DO UPDATE SET
           access_token = excluded.access_token,
-          store_name = excluded.store_name,
+          name = excluded.name,
           installed_at = excluded.installed_at,
           shipping_created = excluded.shipping_created,
           domain = excluded.domain,
@@ -73,32 +75,42 @@ def mark_shipping_created(store_id: str):
 def get_store(store_id: str) -> Optional[Dict]:
     conn = _connect()
     c = conn.cursor()
-    c.execute("SELECT store_id, store_name, access_token, installed_at, shipping_created FROM stores WHERE store_id = ?", (str(store_id),))
+    c.execute("""
+    SELECT store_id, name, access_token, installed_at, shipping_created, domain, email
+    FROM stores WHERE store_id = ?
+    """, (str(store_id),))
     row = c.fetchone()
     conn.close()
     if not row:
         return None
     return {
         "store_id": row[0],
-        "store_name": row[1],
+        "name": row[1],
         "access_token": row[2],
         "installed_at": row[3],
-        "shipping_created": bool(row[4])
+        "shipping_created": bool(row[4]),
+        "domain": row[5],
+        "email": row[6]
     }
 
 def list_stores() -> List[Dict]:
     conn = _connect()
     c = conn.cursor()
-    c.execute("SELECT store_id, store_name, access_token, installed_at, shipping_created FROM stores ORDER BY installed_at DESC")
+    c.execute("""
+    SELECT store_id, name, domain, email, access_token, installed_at, shipping_created
+    FROM stores ORDER BY installed_at DESC
+    """)
     rows = c.fetchall()
     conn.close()
     return [
         {
             "store_id": r[0],
-            "store_name": r[1],
-            "access_token": r[2],
-            "installed_at": r[3],
-            "shipping_created": bool(r[4])
+            "name": r[1],
+            "domain": r[2],
+            "email": r[3],     
+            "access_token": r[4],
+            "installed_at": r[5],
+            "shipping_created": bool(r[6])
         } for r in rows
     ]
 
