@@ -13,7 +13,7 @@ async def success_page(request: Request, store_id: str | None = None):
     if store_id:
         store = get_store(store_id)
         if store:
-            store_url = store.domain
+            store_url = store.get("domain", "")
 
     return request.app.state.templates.TemplateResponse(
         "success.html",
