@@ -79,10 +79,19 @@ async def auth_callback(code: str = None, error: str = None):
     print(f"[DEBUG] Token response data: {data}")
     access_token = data.get("access_token")
     user_id = data.get("user_id") or data.get("store_id") or data.get("store")
-    store_name = data.get("store_name") or data.get("shop_name") or ""
 
     if not access_token or not user_id:
         raise HTTPException(status_code=400, detail={"msg": "Token response missing fields", "raw": data})
+    
+    try:
+        store_info = await tiendanube.get_store_info(
+            store_id=user_id,
+            access_token=access_token
+        )
+        store_name = store_info.get("name", "")
+    except Exception as e:
+        print(f"[WARNING] Could not fetch store info: {str(e)}")
+        store_name = ""
 
     # Persist store in database
     save_store(store_id=user_id, access_token=access_token, store_name=store_name, shipping_created=False)
@@ -94,6 +103,8 @@ async def auth_callback(code: str = None, error: str = None):
         mark_shipping_created(user_id)
     except Exception as e:
         print(f"[WARNING] Could not create PickNShip shipping automatically: {str(e)}")
+
+    # To do: notify of new installation via email/slack/telegram
 
     return RedirectResponse(
     url=f"{settings.BACKEND_URL}/success?store_id={user_id}",

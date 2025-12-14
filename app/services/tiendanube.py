@@ -6,8 +6,6 @@ from typing import Dict, Any
 PICKNSHIP_NAME = "Pick'NShip: vos elegís cuándo"
 PICKNSHIP_DESCRIPTION = "Coordiná día y horario exacto con el repartidor luego de la compra"
 
-# CABA postal codes: 1000–1429 + 'C1000'-'C1429'
-CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
 
 
 async def create_picknship_shipping_method(store_id: int, access_token: str) -> Dict[str, Any]:
@@ -79,3 +77,29 @@ async def create_picknship_shipping_method(store_id: int, access_token: str) -> 
 
         print(f"[INFO] Pick'NShip shipping created for store {store_id}")
         return create_resp.json()
+    
+
+async def get_store_info(store_id: int, access_token: str) -> Dict[str, Any]:
+    """
+    Fetch store information from TiendaNube API.
+    Used to retrieve store name and other metadata after OAuth.
+    """
+
+    headers = {
+        "Authentication": f"bearer {access_token}",
+        "User-Agent": f"Pick'NShip ({settings.PICKNSHIP_EMAIL})",
+        "Content-Type": "application/json"
+    }
+
+    url = f"https://api.tiendanube.com/v1/{store_id}/store"
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        try:
+            resp = await client.get(url, headers=headers)
+        except httpx.RequestError as e:
+            raise Exception(f"Error connecting to TiendaNube API: {str(e)}")
+
+    if resp.status_code != 200:
+        raise Exception(f"Failed to fetch store info: {resp.text}")
+
+    return resp.json()
