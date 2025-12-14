@@ -88,6 +88,7 @@ async def auth_callback(code: str = None, error: str = None):
             store_id=user_id,
             access_token=access_token
         )
+        print(f"[DEBUG] Store info: {store_info}")
         store_name = store_info.get("name", "")
     except Exception as e:
         print(f"[WARNING] Could not fetch store info: {str(e)}")
