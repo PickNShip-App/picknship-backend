@@ -11,9 +11,9 @@ router = APIRouter()
 GOOGLE_MAPS_API_KEY = settings.GOOGLE_MAPS_API_KEY
 
 # Price tiers (ARS)
-PRICE_TIER_LT_5KM = 3000
-PRICE_TIER_5_TO_10KM = 5000
-PRICE_TIER_10_TO_20KM = 10000
+PRICE_TIER_LT_3KM = 3000
+PRICE_TIER_3_TO_5KM = 5000
+PRICE_TIER_5_TO_10KM = 10000
 
 # --- ZIP code fallback for quick check before full addresses ---
 CABA_ZIPCODES = [str(z) for z in range(1000, 1430)] + [f"C{z}" for z in range(1000, 1430)]
@@ -85,15 +85,15 @@ async def calculate_rates(request: Request):
     print(f"[DEBUG] Destination: {destination}")
     print(f"[INFO] Calculated distance: {distance_km} km")
     if distance_km is not None:
-        if distance_km < 5.0:
-            price = PRICE_TIER_LT_5KM
-        elif 5.0 <= distance_km < 10.0:
+        if distance_km < 3.0:
+            price = PRICE_TIER_LT_3KM
+        elif 3.0 <= distance_km < 5.0:
+            price = PRICE_TIER_3_TO_5KM
+        elif 5.0 <= distance_km <= 10.0:
             price = PRICE_TIER_5_TO_10KM
-        elif 10.0 <= distance_km <= 20.0:
-            price = PRICE_TIER_10_TO_20KM
     else:
         if is_caba(postal_code):
-            price = PRICE_TIER_10_TO_20KM
+            price = PRICE_TIER_5_TO_10KM
     
     if price is None:
         return {"rates": []}
