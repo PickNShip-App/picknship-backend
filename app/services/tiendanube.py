@@ -122,3 +122,22 @@ async def register_order_webhook(store_id: int, access_token: str):
 
     if resp.status_code not in (200, 201):
         raise Exception(f"Failed to register webhook: {resp.text}")
+    
+    
+async def get_order(store_id: int, order_id: int, access_token: str) -> Dict[str, Any]:
+    headers = {
+        "Authentication": f"bearer {access_token}",
+        "User-Agent": f"Pick'NShip ({settings.PICKNSHIP_EMAIL})",
+        "Content-Type": "application/json"
+    }
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        resp = await client.get(
+            f"https://api.tiendanube.com/v1/{store_id}/orders/{order_id}",
+            headers=headers
+        )
+
+    if resp.status_code != 200:
+        raise Exception(f"Failed to fetch order {order_id}: {resp.text}")
+
+    return resp.json()
