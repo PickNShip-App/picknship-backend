@@ -75,18 +75,56 @@ async def notify_order_created(order_data: dict):
     """
     Notifica en Slack la creación de una nueva orden PickNShip.
     """
-    shipping_address = json.dumps(order_data.get("shipping_address", {}), indent=2)
-    message = (
-        f"🆕 Nueva orden PickNShip recibida: {order_data['order_id']} (Store {order_data['store_id']})\n"
-        f"- Cliente: {order_data.get('customer_name')} ({order_data.get('customer_email')})\n"
-        f"- Teléfono: {order_data.get('customer_phone')}\n"
-        f"- Total: {order_data.get('total')} {order_data.get('currency')}\n"
-        f"- Estado: {order_data.get('status')}\n"
-        f"- Método de envío: {order_data.get('shipping_method')}\n"
-        f"- Opción de envío: {order_data.get('shipping_option')}\n"
-        f"- Dirección de envío:\n{shipping_address}"
+
+    # Convert current time to Argentina time
+    argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
+    now_utc = datetime.utcnow()
+    now_argentina = now_utc.replace(tzinfo=pytz.utc).astimezone(argentina_tz)
+    formatted_date = now_argentina.strftime("%d/%m/%Y %H:%M:%S")
+
+    # Simplificar la dirección
+    shipping = order_data.get("shipping_address", {})
+    shipping_str = ", ".join(
+        filter(None, [
+            shipping.get("address"),
+            shipping.get("number"),
+            shipping.get("floor"),
+            shipping.get("locality"),
+            shipping.get("city"),
+            shipping.get("province"),
+            shipping.get("zipcode"),
+            "AR"
+        ])
     )
-    await send_slack_message(message)
+
+    blocks = [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": f"🆕 Nueva orden PickNShip: {order_data['order_id']}"
+            }
+        },
+        {
+            "type": "section",
+            "fields": [
+                {"type": "mrkdwn", "text": f"*Store ID:*\n{order_data['store_id']}"},
+                {"type": "mrkdwn", "text": f"*Cliente:*\n{order_data.get('customer_name','—')} ({order_data.get('customer_email','—')})"},
+                {"type": "mrkdwn", "text": f"*Teléfono:*\n{order_data.get('customer_phone','—')}"},
+                {"type": "mrkdwn", "text": f"*Total:*\n{order_data.get('total',0.0)} {order_data.get('currency','ARS')}"},
+                {"type": "mrkdwn", "text": f"*Estado:*\n{order_data.get('status','—')}"},
+                {"type": "mrkdwn", "text": f"*Método de envío:*\n{order_data.get('shipping_method','—')}"},
+                {"type": "mrkdwn", "text": f"*Opción de envío:*\n{order_data.get('shipping_option','—')}"},
+                {"type": "mrkdwn", "text": f"*Dirección de envío:*\n{shipping_str}"},
+                {"type": "mrkdwn", "text": f"*Fecha de recepción:*\n{formatted_date}"}
+            ]
+        }
+    ]
+
+    await send_slack_message(
+        text=f"Nueva orden PickNShip: {order_data['order_id']}",
+        blocks=blocks
+    )
 
 
 async def notify_order_updated(order_data: dict, changes: dict):
