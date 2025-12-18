@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from app.core.config import settings
 from typing import Dict, Any
 
-PICKNSHIP_NAME = "Pick'NShip: elegí el día y hora. Coordinar por WA"
+PICKNSHIP_NAME = "Pick'NShip: coordinamos dia y horario por whatsapp"
 
 async def create_picknship_shipping_method(store_id: int, access_token: str) -> Dict[str, Any]:
     """

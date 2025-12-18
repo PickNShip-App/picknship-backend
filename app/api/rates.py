@@ -99,7 +99,7 @@ async def calculate_rates(request: Request):
         return {"rates": []}
 
     rate = {
-        "name": "Pick'NShip: elegí el día y hora. Coordinar por WA",
+        "name": "Pick'NShip: coordinamos dia y horario por whatsapp",
         "code": "picknship_dynamic",
         "price": price,
         "price_merchant": price,
