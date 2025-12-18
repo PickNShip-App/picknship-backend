@@ -13,10 +13,11 @@ async def order_webhook(request: Request):
     store_id = payload.get("store_id")
     status = payload.get("status")
     weight = payload.get("weight")
+    customer_payload = payload.get("customer") or {}
     customer = {
-        "name": payload.get("customer").get("name"),
-        "email": payload.get("customer").get("email"),
-        "phone": payload.get("customer").get("phone")
+        "name": customer_payload.get("name"),
+        "email": customer_payload.get("email"),
+        "phone": customer_payload.get("phone"),
     }
     shipping_address = payload.get("shipping_address")
 

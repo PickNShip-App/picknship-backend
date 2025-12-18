@@ -100,3 +100,25 @@ async def get_store_info(store_id: int, access_token: str) -> Dict[str, Any]:
         raise Exception(f"Failed to fetch store info: {resp.text}")
 
     return resp.json()
+
+async def register_order_webhook(store_id: int, access_token: str):
+    headers = {
+        "Authentication": f"bearer {access_token}",
+        "User-Agent": f"Pick'NShip ({settings.PICKNSHIP_EMAIL})",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "event": "order/created",
+        "url": f"{settings.BACKEND_URL}/webhook/orders"
+    }
+
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        resp = await client.post(
+            f"https://api.tiendanube.com/v1/{store_id}/webhooks",
+            headers=headers,
+            json=payload
+        )
+
+    if resp.status_code not in (200, 201):
+        raise Exception(f"Failed to register webhook: {resp.text}")

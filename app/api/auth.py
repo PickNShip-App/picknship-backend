@@ -117,10 +117,10 @@ async def auth_callback(code: str = None, error: str = None):
     # Automatically create PickNShip shipping method
     try:
         await tiendanube.create_picknship_shipping_method(store_id=user_id, access_token=access_token)
-        # Mark as shipping created
+        await tiendanube.register_order_webhook(store_id=user_id, access_token=access_token)
         mark_shipping_created(user_id)
     except Exception as e:
-        print(f"[WARNING] Could not create PickNShip shipping automatically: {str(e)}")
+        print(f"[WARNING] Setup failed: {str(e)}")
 
     # To do: notify of new installation via email/slack/telegram
 
