@@ -106,10 +106,12 @@ async def register_order_webhooks(store_id: str, access_token: str):
         "Authentication": f"bearer {access_token}",
         "Content-Type": "application/json"
     }
+
     payloads = [
-        {"topic": "order/created", "address": f"{settings.BACKEND_URL}/webhook/orders"},
-        {"topic": "order/updated", "address": f"{settings.BACKEND_URL}/webhook/orders"},
+        {"event": "order/created", "url": f"{settings.BACKEND_URL}/webhook/orders"},
+        {"event": "order/updated", "url": f"{settings.BACKEND_URL}/webhook/orders"},
     ]
+
     async with httpx.AsyncClient() as client:
         for payload in payloads:
             resp = await client.post(f"https://api.tiendanube.com/v1/{store_id}/webhooks",
