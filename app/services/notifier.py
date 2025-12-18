@@ -3,6 +3,7 @@ from app.core.config import settings
 from typing import Dict, Any, Optional
 from datetime import datetime
 import pytz
+import json
 
 async def send_slack_message(
     text: str,
@@ -40,7 +41,7 @@ async def notify_store_installed(
 ):
     # Convert current time to Argentina time
     argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
-    now_utc = datetime.utcnow()
+    now_utc = datetime.now()
     now_argentina = now_utc.astimezone(argentina_tz)
     formatted_date = now_argentina.strftime("%d/%m/%Y %H:%M:%S")  # Example: 14/12/2025 03:23:37
 
@@ -68,3 +69,38 @@ async def notify_store_installed(
         text="Nueva tienda conectada a PickNShip",
         blocks=blocks
     )
+
+
+async def notify_order_created(order_data: dict):
+    """
+    Notifica en Slack la creación de una nueva orden PickNShip.
+    """
+    shipping_address = json.dumps(order_data.get("shipping_address", {}), indent=2)
+    message = (
+        f"🆕 Nueva orden PickNShip recibida: {order_data['order_id']} (Store {order_data['store_id']})\n"
+        f"- Cliente: {order_data.get('customer_name')} ({order_data.get('customer_email')})\n"
+        f"- Teléfono: {order_data.get('customer_phone')}\n"
+        f"- Total: {order_data.get('total')} {order_data.get('currency')}\n"
+        f"- Estado: {order_data.get('status')}\n"
+        f"- Método de envío: {order_data.get('shipping_method')}\n"
+        f"- Opción de envío: {order_data.get('shipping_option')}\n"
+        f"- Dirección de envío:\n{shipping_address}"
+    )
+    await send_slack_message(message)
+
+
+async def notify_order_updated(order_data: dict, changes: dict):
+    """
+    Notifica en Slack los cambios detectados en una orden.
+    """
+    lines = [f"📦 Orden actualizada: {order_data['order_id']} (Store {order_data['store_id']})"]
+    for field, vals in changes.items():
+        if field == "shipping_address":
+            old_addr = json.dumps(vals["old"], indent=2) if vals["old"] else "{}"
+            new_addr = json.dumps(vals["new"], indent=2) if vals["new"] else "{}"
+            lines.append(f"- {field} cambiado:\nAnterior:\n{old_addr}\nNuevo:\n{new_addr}")
+        else:
+            lines.append(f"- {field}: {vals['old']} → {vals['new']}")
+    
+    message = "\n".join(lines)
+    await send_slack_message(message)

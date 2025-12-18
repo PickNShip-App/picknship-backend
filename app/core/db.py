@@ -2,6 +2,7 @@ import sqlite3
 import threading
 from datetime import datetime
 from typing import Optional, List, Dict
+import json
 
 DB_PATH = "picknship.db"
 _lock = threading.Lock()
@@ -30,8 +31,18 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_id TEXT,
             store_id TEXT,
-            payload TEXT,
-            received_at TEXT
+            customer_name TEXT,
+            customer_email TEXT,
+            customer_phone TEXT,
+            total REAL,
+            currency TEXT,
+            status TEXT,
+            shipping_method TEXT,
+            shipping_option TEXT,
+            shipping_address TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            UNIQUE(order_id, store_id)
         )
         """)
         conn.commit()
@@ -114,14 +125,102 @@ def list_stores() -> List[Dict]:
         } for r in rows
     ]
 
-def save_order(order_id: str, store_id: str, payload: str):
+def save_order_if_new(order_data: dict) -> bool:
+    """
+    Save PickNShip order idempotently.
+    Returns True if it was a new order, False if already existed.
+    """
     with _lock:
         conn = _connect()
         c = conn.cursor()
-        now = datetime.utcnow().isoformat()
-        c.execute("""
-        INSERT INTO orders (order_id, store_id, payload, received_at)
-        VALUES (?, ?, ?, ?)
-        """, (str(order_id), str(store_id), payload, now))
-        conn.commit()
-        conn.close()
+        now = datetime.now().isoformat()
+
+        order_id = str(order_data["order_id"])
+        store_id = str(order_data["store_id"])
+
+        shipping_address = json.dumps(order_data.get("shipping_address", {}))
+
+        try:
+            c.execute("""
+            INSERT INTO orders (
+                order_id, store_id, customer_name, customer_email, customer_phone,
+                total, currency, status, shipping_method, shipping_option, shipping_address,
+                created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                order_id,
+                store_id,
+                order_data.get("customer_name", ""),
+                order_data.get("customer_email", ""),
+                order_data.get("customer_phone", ""),
+                float(order_data.get("total", 0.0)),
+                order_data.get("currency", "ARS"),
+                order_data.get("status", ""),
+                order_data.get("shipping_method", ""),
+                order_data.get("shipping_option", ""),
+                shipping_address,
+                order_data.get("created_at", now),
+                order_data.get("updated_at", now)
+            ))
+            conn.commit()
+            conn.close()
+            return True
+        except sqlite3.IntegrityError:
+            c.execute("""
+            UPDATE orders SET
+                customer_name = ?,
+                customer_email = ?,
+                customer_phone = ?,
+                total = ?,
+                currency = ?,
+                status = ?,
+                shipping_method = ?,
+                shipping_option = ?,
+                shipping_address = ?,
+                updated_at = ?
+            WHERE order_id = ? AND store_id = ?
+            """, (
+                order_data.get("customer_name", ""),
+                order_data.get("customer_email", ""),
+                order_data.get("customer_phone", ""),
+                float(order_data.get("total", 0.0)),
+                order_data.get("currency", "ARS"),
+                order_data.get("status", ""),
+                order_data.get("shipping_method", ""),
+                order_data.get("shipping_option", ""),
+                shipping_address,
+                order_data.get("updated_at", now),
+                order_id,
+                store_id
+            ))
+            conn.commit()
+            conn.close()
+            return False
+        
+
+def get_order(order_id: str, store_id: str) -> dict:
+    conn = _connect()
+    c = conn.cursor()
+    c.execute("""
+        SELECT customer_name, customer_email, customer_phone, total, currency, status,
+               shipping_method, shipping_option, shipping_address, created_at, updated_at
+        FROM orders WHERE order_id = ? AND store_id = ?
+    """, (str(order_id), str(store_id)))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return {}
+    
+    return {
+        "customer_name": row[0],
+        "customer_email": row[1],
+        "customer_phone": row[2],
+        "total": row[3],
+        "currency": row[4],
+        "status": row[5],
+        "shipping_method": row[6],
+        "shipping_option": row[7],
+        "shipping_address": json.loads(row[8]) if row[8] else {},
+        "created_at": row[9],
+        "updated_at": row[10],
+    }
