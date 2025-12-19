@@ -108,10 +108,12 @@ async def auth_callback(code: str = None, error: str = None):
 
     # Notify of new installation
     await notify_new_store(
-        store_id=str(user_id),
-        store_name=store_data["name"],
-        domain=store_data["domain"],
-        email=store_data["email"]
+        {
+            "store_id": str(user_id),
+            "name": store_data["name"],
+            "domain": store_data["domain"],
+            "email": store_data["email"]
+        }
     )
 
     # Automatically create PickNShip shipping method
