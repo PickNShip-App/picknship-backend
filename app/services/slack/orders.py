@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 import pytz
 from app.services.slack.client import send_slack_message
+from app.services.slack.channels import SLACK_CHANNELS
 
 ORDERS_CHANNEL = "#orders"  # canal donde se envían las notificaciones de órdenes
 
@@ -27,9 +28,6 @@ def format_address(address: dict) -> str:
 
 
 async def notify_order_created(order_data: dict):
-    """
-    Notifica en Slack la creación de una nueva orden PickNShip.
-    """
     argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
     now_argentina = datetime.utcnow().astimezone(argentina_tz)
     formatted_date = now_argentina.strftime("%d/%m/%Y %H:%M:%S")
@@ -39,7 +37,7 @@ async def notify_order_created(order_data: dict):
     blocks = [
         {
             "type": "header",
-            "text": {"type": "plain_text", "text": "🆕 Nueva orden PickNShip"}
+            "text": {"type": "plain_text", "text": "📦 Nueva orden PickNShip"}
         },
         {
             "type": "section",
@@ -59,21 +57,16 @@ async def notify_order_created(order_data: dict):
         }
     ]
 
-    await send_slack_message(
-        text=f"Nueva orden PickNShip: {order_data['order_id']}",
-        blocks=blocks,
-        channel=ORDERS_CHANNEL
-    )
+    payload = {
+        "text": f"Nueva orden PickNShip: {order_data['order_id']}",
+        "blocks": blocks
+    }
+
+
+    await send_slack_message(SLACK_CHANNELS["orders"], payload)
 
 
 async def notify_order_updated(order_diff: dict):
-    """
-    Notifica en Slack los cambios de una orden PickNShip existente.
-    order_diff debe ser un dict con:
-      - order_id
-      - store_id
-      - changes: dict con {campo: {"old": valor, "new": valor}}
-    """
     argentina_tz = pytz.timezone("America/Argentina/Buenos_Aires")
     now_argentina = datetime.utcnow().astimezone(argentina_tz)
     formatted_date = now_argentina.strftime("%d/%m/%Y %H:%M:%S")
@@ -103,8 +96,10 @@ async def notify_order_updated(order_diff: dict):
         }
     ]
 
-    await send_slack_message(
-        text=f"Orden actualizada PickNShip: {order_diff['order_id']}",
-        blocks=blocks,
-        channel=ORDERS_CHANNEL
-    )
+    payload = {
+        "text": f"Orden actualizada PickNShip: {order_diff['order_id']}",
+        "blocks": blocks
+    }
+
+    await send_slack_message(SLACK_CHANNELS["orders"], payload)
+
