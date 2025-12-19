@@ -47,7 +47,6 @@ async def notify_order_created(order_data: dict):
                 {"type": "mrkdwn", "text": f"*Cliente:*\n{order_data.get('customer_name', '—')}"},
                 {"type": "mrkdwn", "text": f"*Email:*\n{order_data.get('customer_email', '—')}"},
                 {"type": "mrkdwn", "text": f"*Teléfono:*\n{order_data.get('customer_phone', '—')}"},
-                {"type": "mrkdwn", "text": f"*Total:*\n{order_data.get('total', 0.0)} {order_data.get('currency', 'ARS')}"},
                 {"type": "mrkdwn", "text": f"*Estado:*\n{order_data.get('status', '—')}"},
                 {"type": "mrkdwn", "text": f"*Método de envío:*\n{order_data.get('shipping_method', '—')}"},
                 {"type": "mrkdwn", "text": f"*Opción de envío:*\n{order_data.get('shipping_option', '—')}"},
