@@ -65,6 +65,11 @@ async def order_webhook(request: Request):
                 changes[k] = {"old": old, "new": new}
         
         if changes:
-            await notify_order_updated(order_data, changes)
+            order_diff = {
+                "order_id": order_id,
+                "store_id": store_id,
+                "changes": changes
+            }
+            await notify_order_updated(order_diff)
 
     return {"status": "ok"}
