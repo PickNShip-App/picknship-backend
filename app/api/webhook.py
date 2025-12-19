@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Request, HTTPException
 from app.core.db import get_store, save_order_if_new, get_order
 from app.services.tiendanube import get_order, PICKNSHIP_NAME
-from app.services.notifier import notify_order_created, notify_order_updated
-import json
+from app.services.notifier import notify_new_order
 
 router = APIRouter(prefix="/webhook")
 
@@ -53,7 +52,7 @@ async def order_webhook(request: Request):
 
     # 4️⃣ Notificaciones
     if is_new:
-        await notify_order_created(order_data)
+        await notify_new_order(order_data)
     else:
         # comparar cambios
         previous = get_order(order_id, store_id)
