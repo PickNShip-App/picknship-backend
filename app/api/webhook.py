@@ -8,7 +8,7 @@ router = APIRouter(prefix="/webhook")
 @router.post("/orders")
 async def order_webhook(request: Request):
     payload = await request.json()
-
+    print(f"[WEBHOOK] Received payload: {payload}")
     store_id = payload.get("store_id")
     order_id = payload.get("id")
     event = payload.get("event", "order/created")
@@ -46,10 +46,10 @@ async def order_webhook(request: Request):
         "created_at": order.get("created_at"),
         "updated_at": order.get("updated_at")
     }
-
+    print(f"[WEBHOOK] Processed order data: {order_data}")
     # 3️⃣ Guardar orden
     is_new = save_order_if_new(order_data)
-
+    print(f"[WEBHOOK] Order {order_id} saved. New: {is_new}")
     # 4️⃣ Notificaciones
     if is_new:
         await notify_order_created(order_data)
