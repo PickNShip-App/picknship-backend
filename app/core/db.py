@@ -224,3 +224,35 @@ def get_order(order_id: str, store_id: str) -> dict:
         "created_at": row[9],
         "updated_at": row[10],
     }
+
+
+def list_orders():
+    conn = _connect()
+    c = conn.cursor()
+    c.execute("""
+        SELECT order_id, store_id, customer_name, total, currency,
+               status, shipping_method, shipping_option,
+               shipping_address, created_at, updated_at
+        FROM orders
+        ORDER BY created_at DESC
+        LIMIT 100
+    """)
+    rows = c.fetchall()
+    conn.close()
+
+    return [
+        {
+            "order_id": r[0],
+            "store_id": r[1],
+            "customer_name": r[2],
+            "total": r[3],
+            "currency": r[4],
+            "status": r[5],
+            "shipping_method": r[6],
+            "shipping_option": r[7],
+            "shipping_address": r[8],
+            "created_at": r[9],
+            "updated_at": r[10],
+        }
+        for r in rows
+    ]

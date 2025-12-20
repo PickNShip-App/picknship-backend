@@ -13,5 +13,6 @@ class Settings:
     LOGO_URL = os.getenv("LOGO_URL", "https://picknship.com/logo.png")
     SLACK_STORES_WEBHOOK_URL = os.getenv("SLACK_STORES_WEBHOOK_URL")
     SLACK_ORDERS_WEBHOOK_URL = os.getenv("SLACK_ORDERS_WEBHOOK_URL")
+    API_KEY = os.getenv("API_KEY")
 
 settings = Settings()
