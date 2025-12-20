@@ -226,7 +226,7 @@ def get_order(order_id: str, store_id: str) -> dict:
     }
 
 
-def list_orders():
+def list_orders() -> List[Dict]:
     conn = _connect()
     c = conn.cursor()
     c.execute("""
