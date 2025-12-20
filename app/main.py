@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api import auth, webhook, stores, rates, success
+from app.api import auth, webhook, stores, rates, success, orders
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -16,6 +16,7 @@ app.include_router(auth.router)
 app.include_router(webhook.router)
 app.include_router(stores.router)
 app.include_router(rates.router)
+app.include_router(orders.router)
 
 @app.get("/")
 def home():
