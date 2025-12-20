@@ -7,6 +7,6 @@ router = APIRouter(
     dependencies=[Depends(verify_api_key)]
 )
 
-@router.get("")
+@router.get("/")
 def get_orders():
     return list_orders()
