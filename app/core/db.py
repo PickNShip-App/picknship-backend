@@ -75,6 +75,45 @@ def save_store(store_id: str, access_token: str, store: Dict, shipping_created: 
         conn.commit()
         conn.close()
 
+def save_store(store_id: str, access_token: str, store: Dict, shipping_created: bool = False) -> bool:
+    """
+    Guarda o actualiza una tienda.
+    Devuelve True si es una tienda NUEVA, False si ya existía.
+    """
+    with _lock:
+        conn = _connect()
+        c = conn.cursor()
+
+        c.execute("SELECT 1 FROM stores WHERE store_id = ?", (str(store_id),))
+        existed = c.fetchone() is not None
+
+        now = datetime.now().isoformat()
+
+        c.execute("""
+        INSERT INTO stores (store_id, name, access_token, installed_at, shipping_created, domain, email)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(store_id) DO UPDATE SET
+          access_token = excluded.access_token,
+          name = excluded.name,
+          installed_at = excluded.installed_at,
+          shipping_created = excluded.shipping_created,
+          domain = excluded.domain,
+          email = excluded.email
+        """, (
+            str(store_id),
+            store.get("name", ""),
+            access_token,
+            now,
+            int(shipping_created),
+            store.get("domain", ""),
+            store.get("email", "")
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return not existed
+
 def mark_shipping_created(store_id: str):
     with _lock:
         conn = _connect()

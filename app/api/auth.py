@@ -104,17 +104,7 @@ async def auth_callback(code: str = None, error: str = None):
         }
 
     # Persist store in database
-    save_store(store_id=user_id, access_token=access_token, store=store_data, shipping_created=False)
-
-    # Notify of new installation
-    await notify_new_store(
-        {
-            "store_id": str(user_id),
-            "name": store_data["name"],
-            "domain": store_data["domain"],
-            "email": store_data["email"]
-        }
-    )
+    is_new_store = save_store(store_id=user_id, access_token=access_token, store=store_data, shipping_created=False)
 
     # Automatically create PickNShip shipping method
     try:
@@ -124,7 +114,16 @@ async def auth_callback(code: str = None, error: str = None):
     except Exception as e:
         print(f"[WARNING] Setup failed: {str(e)}")
 
-    # To do: notify of new installation via email/slack/telegram
+    # Notify of new installation
+    if is_new_store:
+        await notify_new_store(
+            {
+                "store_id": str(user_id),
+                "name": store_data["name"],
+                "domain": store_data["domain"],
+                "email": store_data["email"]
+            }
+        )
 
     return RedirectResponse(
     url=f"{settings.BACKEND_URL}/success?store_id={user_id}",
