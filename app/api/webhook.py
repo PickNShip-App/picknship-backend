@@ -24,7 +24,7 @@ async def order_webhook(request: Request):
 
     # 1️⃣ Fetch full order
     order = await get_order(store_id=store_id, order_id=order_id, access_token=access_token)
-
+    print(f"[WEBHOOK] Fetched order: {order}")
     shipping_method_name = order.get("shipping_carrier_name") or order.get("shipping_option") or ""
     if PICKNSHIP_NAME not in shipping_method_name:
         print(f"[INFO] Ignored order {order_id}: not PickNShip")
