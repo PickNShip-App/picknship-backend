@@ -105,6 +105,7 @@ async def auth_callback(code: str = None, error: str = None):
 
     # Persist store in database
     is_new_store = save_store(store_id=user_id, access_token=access_token, store=store_data, shipping_created=False)
+    print(f"[STORES] Tienda nueva: {is_new_store}")
 
     # Automatically create PickNShip shipping method
     try:
