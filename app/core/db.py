@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional, List, Dict
 import json
 
-DB_PATH = "picknship.db"
+DB_PATH = "/var/data/picknship.db"
 _lock = threading.Lock()
 
 def _connect():
